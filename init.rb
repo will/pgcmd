@@ -1,2 +1,8 @@
-puts 'pgcmd init'
+module Heroku
+  module Command
+    class Pg
+
+    end
+  end
+end
 
