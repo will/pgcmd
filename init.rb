@@ -1,0 +1,2 @@
+puts 'pgcmd init'
+
