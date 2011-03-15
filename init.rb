@@ -6,31 +6,35 @@ module Heroku
         raise 'not implemented'
       end
 
-      class Resolver < Struct.new(:config_vars, :message)
+      class Resolver
         URL_PATTERN = /_URL$/
 
-        def resolve(db_id)
-          @db_id = db_id
+        attr_reader :url, :message
 
-          url_deprecation_check
-          default_database_check
-
-          config_vars["#{@db_id}_URL"]
+        def initialize(db_id, config_vars)
+          @config_vars, @db_id = config_vars, db_id
+          resolve
         end
 
         private
+
+        def resolve
+          url_deprecation_check
+          default_database_check
+          @url = @config_vars["#{@db_id}_URL"]
+        end
 
         def url_deprecation_check
           return unless @db_id =~ URL_PATTERN
           old_id = @db_id.dup
           @db_id.gsub!(URL_PATTERN,'')
-          self.message = "#{old_id} is deprecated, please use #{@db_id}"
+          @message = "#{old_id} is deprecated, please use #{@db_id}"
         end
 
         def default_database_check
           return unless @db_id == 'DATABASE'
           @db_id = 'SHARED_DATABASE'
-          self.message = 'using SHARED_DATABASE_URL'
+          @message = 'using SHARED_DATABASE_URL'
         end
       end
     end
