@@ -6,26 +6,32 @@ module Heroku
         raise 'not implemented'
       end
 
-      def resolve(db_id)
-        db_id = url_deprecation_check(db_id)
-        if db_id == 'DATABASE'
-          db_id = 'SHARED_DATABASE'
-          heroku.display('using SHARED_DATABASE_URL')
-        end
-        db_var = "#{db_id}_URL"
-        config_vars[db_var]
-      end
+      class Resolver < Struct.new(:config_vars, :message)
+        URL_PATTERN = /_URL$/
 
-      private
+        def resolve(db_id)
+          @db_id = db_id
 
-      def url_deprecation_check(db_id)
-        pattern = /_URL$/
-        if db_id =~ pattern
-          old_id = db_id.dup
-          db_id.gsub!(pattern,'')
-          heroku.display("#{old_id} is deprecated, please use #{db_id}")
+          url_deprecation_check
+          default_database_check
+
+          config_vars["#{@db_id}_URL"]
         end
-        db_id
+
+        private
+
+        def url_deprecation_check
+          return unless @db_id =~ URL_PATTERN
+          old_id = @db_id.dup
+          @db_id.gsub!(URL_PATTERN,'')
+          self.message = "#{old_id} is deprecated, please use #{@db_id}"
+        end
+
+        def default_database_check
+          return unless @db_id == 'DATABASE'
+          @db_id = 'SHARED_DATABASE'
+          self.message = 'using SHARED_DATABASE_URL'
+        end
       end
     end
   end
