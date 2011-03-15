@@ -12,16 +12,31 @@ module Heroku
         attr_reader :url, :message
 
         def initialize(db_id, config_vars)
-          @config_vars, @db_id = config_vars, db_id
+          @db_id, @config_vars = db_id, config_vars
+          parse_config
           resolve
         end
 
         private
 
+        def parse_config
+          @dbs = {}
+          @config_vars.each do |key,val|
+            case key
+            when "DATABASE_URL"
+              @dbs['DATABASE'] = val
+            when 'SHARED_DATABASE_URL'
+              @dbs['SHARED_DATABASE'] = val
+            when /^HEROKU_POSTGRESQL_(\w+)_URL$/
+              @dbs[$+] = val # $+ is the last match
+            end
+          end
+        end
+
         def resolve
           url_deprecation_check
           default_database_check
-          @url = @config_vars["#{@db_id}_URL"]
+          @url = @dbs[@db_id]
         end
 
         def url_deprecation_check
@@ -33,8 +48,10 @@ module Heroku
 
         def default_database_check
           return unless @db_id == 'DATABASE'
-          @db_id = 'SHARED_DATABASE'
-          @message = 'using SHARED_DATABASE_URL'
+          @db_id = @dbs.find { |k,v|
+            v == @dbs['DATABASE'] && k != 'DATABASE'
+          }.first
+          @message = "using #{@db_id}"
         end
       end
     end
