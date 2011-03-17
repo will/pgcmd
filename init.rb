@@ -37,7 +37,7 @@ module Heroku
       def display_info_dedicated(db)
         database = heroku_postgresql_client(db[:url]).get_database
 
-        display_info("Plan", database[:plan])
+        display_info("Plan", database[:plan].capitalize)
 
         display_info("State",
             "#{database[:state]} for " +
