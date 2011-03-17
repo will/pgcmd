@@ -15,7 +15,11 @@ module Heroku
       end
 
       def info
-        Resolver.all(config_vars).each { |db| display_db_info db }
+        if db_flag
+          display_db_info Resolver.new(db_flag, config_vars)
+        else
+          Resolver.all(config_vars).each { |db| display_db_info db }
+        end
       end
 
       private
@@ -70,8 +74,12 @@ module Heroku
         return URI.parse(url)
       end
 
+      def db_flag
+        @db_flag ||= extract_option("--db")
+      end
+
       def resolve_db
-        db_id = extract_option("--db") || "DATABASE"
+        db_id = db_flag || "DATABASE"
         config_vars = heroku.config_vars(app)
 
         resolver = Resolver.new(db_id, config_vars)
@@ -99,6 +107,10 @@ module Heroku
 
         def message
           @messages.join("\n") unless @messages.empty?
+        end
+
+        def [](arg)
+           {:name => db_id, :url => url, :default => url==@dbs['DATABASE']}[arg]
         end
 
         def self.all(config_vars)

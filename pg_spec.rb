@@ -6,9 +6,15 @@ include Heroku::Command
 
 describe Pg::Resolver do
   context "pass in *_URL" do
+    let(:r) { Pg::Resolver.new "HEROKU_POSTGRESQL_SOME_URL", "HEROKU_POSTGRESQL_SOME_URL" => 'something'}
+
     it 'should warn to not add in _URL, and proceed without it' do
-      r = Pg::Resolver.new "SOME_URL", "SOME_URL" => 'something'
-      r.message.should == "SOME_URL is deprecated, please use SOME"
+      r.message.should == "HEROKU_POSTGRESQL_SOME_URL is deprecated, please use HEROKU_POSTGRESQL_SOME\nusing SOME"
+    end
+
+    it 'should have [] access' do
+      r[:url].should == 'something'
+      r[:name].should == 'SOME'
     end
   end
 
