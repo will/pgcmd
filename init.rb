@@ -15,14 +15,48 @@ module Heroku
       end
 
       def info
-        if db_flag
-          display_db_info Resolver.new(db_flag, config_vars)
-        else
-          Resolver.all(config_vars).each { |db| display_db_info db }
-        end
+        specified_db_or_all { |db| display_db_info db }
+      end
+
+      def wait
+        display "Checking availablity of all databases" unless specified_db?
+        specified_db_or_all { |db| wait_for db }
       end
 
       private
+
+      def specified_db?
+        db_flag
+      end
+
+      def specified_db_or_all
+        if specified_db?
+          yield Resolver.new(db_flag, config_vars)
+        else
+          Resolver.all(config_vars).each { |db| yield db }
+        end
+      end
+
+      def wait_for(db)
+        return if "SHARED_DATABASE" == db[:name]
+        name = "database #{db[:name]}#{ "(DATABASE_URL)" if db[:default]}"
+        ticking do |ticks|
+          database = heroku_postgresql_client(db[:url]).get_database
+          state = database[:state]
+          if state == "available"
+            redisplay("The #{name} is available", true)
+            break
+          elsif state == "deprovisioned"
+            redisplay("The #{name} has been destroyed", true)
+            break
+          elsif state == "failed"
+            redisplay("The #{name} encountered an error", true)
+            break
+          else
+            redisplay("#{state.capitalize} #{name} #{spinner(ticks)}", false)
+          end
+        end
+      end
 
       def display_db_info(db)
         display("=== #{app} database #{db[:name]} #{"(DATABASE_URL)" if db[:default]}")
