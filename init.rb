@@ -14,7 +14,49 @@ module Heroku
         system "psql -U #{uri.user} -h #{uri.host} #{uri.path[1..-1]}"
       end
 
+      def info
+        Resolver.all(config_vars).each { |db| display_db_info db }
+      end
+
       private
+
+      def display_db_info(db)
+        display("=== #{app} database #{db[:name]} #{"(DATABASE_URL)" if db[:default]}")
+        if db[:name] == "SHARED_DATABASE"
+          display_info_shared
+        else
+          display_info_dedicated(db)
+        end
+      end
+
+      def display_info_shared
+        attrs = heroku.info(app)
+        display_info("Data size", "#{size_format(attrs[:database_size].to_i)}")
+      end
+
+      def display_info_dedicated(db)
+        database = heroku_postgresql_client(db[:url]).get_database
+
+        display_info("Plan", database[:plan])
+
+        display_info("State",
+            "#{database[:state]} for " +
+            "#{delta_format(Time.parse(database[:state_updated_at]))}")
+
+        if database[:num_bytes] && database[:num_tables]
+          display_info("Data size",
+            "#{size_format(database[:num_bytes])} in " +
+            "#{database[:num_tables]} table#{database[:num_tables] == 1 ? "" : "s"}")
+        end
+
+        if version = database[:postgresql_version]
+          display_info("PG version", version)
+        end
+
+        display_info("Born", time_format(database[:created_at]))
+        display_info("Mem Used", "%0.2f %" % database[:mem_percent_used]) unless [nil, ""].include? database[:mem_percent_used]
+        display_info("CPU Used", "%0.2f %" % (100 - database[:cpu_idle].to_f)) unless [nil, ""].include? database[:cpu_idle]
+      end
 
       def generate_ingress_uri(action)
         name, url = resolve_db
@@ -59,20 +101,35 @@ module Heroku
           @messages.join("\n") unless @messages.empty?
         end
 
+        def self.all(config_vars)
+          parsed = parse_config(config_vars)
+          default = parsed['DATABASE']
+          dbs = []
+          parsed.reject{|k,v| k == 'DATABASE'}.each do |name, url|
+            dbs << {:name => name, :url => url, :default => url==default}
+          end
+          dbs.sort {|a,b| a[:default]? -1 : a[:name] <=> b[:name] }
+        end
+
         private
 
         def parse_config
-          @dbs = {}
-          @config_vars.each do |key,val|
+          @dbs = self.class.parse_config(@config_vars)
+        end
+
+        def self.parse_config(config_vars)
+          dbs = {}
+          config_vars.each do |key,val|
             case key
             when "DATABASE_URL"
-              @dbs['DATABASE'] = val
+              dbs['DATABASE'] = val
             when 'SHARED_DATABASE_URL'
-              @dbs['SHARED_DATABASE'] = val
+              dbs['SHARED_DATABASE'] = val
             when /^HEROKU_POSTGRESQL_(\w+)_URL$/
-              @dbs[$+] = val # $+ is the last match
+              dbs[$+] = val # $+ is the last match
             end
           end
+          return dbs
         end
 
         def resolve

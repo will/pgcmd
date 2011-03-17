@@ -80,5 +80,13 @@ describe Pg::Resolver do
       r = Pg::Resolver.new('PERIWINKLE', config)
       r.url.should == 'postgres://pari'
     end
+
+    it 'returns all with Resolver.all' do
+      Pg::Resolver.all(config).should =~ [
+        {:name => 'SHARED_DATABASE', :url => 'postgres://shared', :default => false},
+        {:name => 'PERIWINKLE',      :url => 'postgres://pari',   :default => false},
+        {:name => 'RED',             :url => 'postgres://red',    :default => true}
+      ]
+    end
   end
 end
