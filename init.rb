@@ -24,7 +24,7 @@ module Heroku
 
       def promote
         db = resolve_db(:required => 'promote')
-        abort( "!  DATABASE_URL is already set to #{db[:name]}") if db[:default]
+        abort( " !  DATABASE_URL is already set to #{db[:name]}") if db[:default]
 
         display "Setting config variable DATABASE_URL to #{db[:name]}", false
         return unless confirm_command
@@ -59,7 +59,7 @@ module Heroku
           if options[:allow_default]
             db_id = "DATABASE"
           else
-            abort("!   Usage: heroku pg:#{options[:required]} --db <DATABASE>") if options[:required]
+            abort(" !  Usage: heroku pg:#{options[:required]} --db <DATABASE>") if options[:required]
           end
         end
         config_vars = heroku.config_vars(app)
@@ -67,7 +67,13 @@ module Heroku
         resolver = Resolver.new(db_id, config_vars)
         display resolver.message
         unless resolver.url
-          abort " !  Could not resolve database #{db_id}"
+          display " !  Could not resolve database #{db_id}"
+          display " !"
+          display " !  Available databases: "
+          Resolver.all(config_vars).each do |db|
+            display " !   #{db[:pretty_name]}"
+          end
+          abort
         end
 
         return resolver
