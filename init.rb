@@ -4,12 +4,13 @@ module Heroku
       def ingress
         uri = generate_ingress_uri("Granting ingress for 60s")
         display "Connection info string:"
-        display "   \"dbname=#{uri.path[1..-1]} host=#{uri.host} user=#{uri.user} password=#{uri.password}\""
+        display "   \"dbname=#{uri.path[1..-1]} host=#{uri.host} user=#{uri.user} password=#{uri.password} sslmode=required\""
       end
 
       def psql
         uri = generate_ingress_uri("Connecting")
         ENV["PGPASSWORD"] = uri.password
+        ENV["PGSSLMODE"]  = 'require'
         system "psql -U #{uri.user} -h #{uri.host} #{uri.path[1..-1]}"
       end
 
