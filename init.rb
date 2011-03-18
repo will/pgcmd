@@ -1,7 +1,6 @@
 module Heroku
   module Command
     class Pg
-
       def ingress
         uri = generate_ingress_uri("Granting ingress for 60s")
         display "Connection info string:"
@@ -23,15 +22,48 @@ module Heroku
         specified_db_or_all { |db| wait_for db }
       end
 
+      def promote
+        abort(" !   Usage: heroku pg:promote --db <DATABASE>") unless specified_db?
+        db = resolve_db
+        abort( "!  DATABASE_URL is already set to #{db[:name]}") if db[:default]
+
+        display "Setting config variable DATABASE_URL to #{db[:name]}", false
+        return unless confirm_command
+
+        redisplay "Setting... "
+        heroku.add_config_vars(app, {"DATABASE_URL" => db[:url]})
+        redisplay "Setting... done\n"
+
+        display_info "DATABASE_URL (#{db[:name]})", db[:url]
+      end
+
       private
+
+      def resolve_db(options={})
+        db_id = db_flag
+        db_id = "DATABASE" if options[:allow_default]
+        config_vars = heroku.config_vars(app)
+
+        resolver = Resolver.new(db_id, config_vars)
+        display resolver.message
+        unless resolver.url
+          abort " !  Could not resolve database #{db_id}"
+        end
+
+        return resolver
+      end
 
       def specified_db?
         db_flag
       end
 
+      def db_flag
+        @db_flag ||= extract_option("--db")
+      end
+
       def specified_db_or_all
         if specified_db?
-          yield Resolver.new(db_flag, config_vars)
+          yield resolve_db#Resolver.new(db_flag, config_vars)
         else
           Resolver.all(config_vars).each { |db| yield db }
         end
@@ -97,32 +129,15 @@ module Heroku
       end
 
       def generate_ingress_uri(action)
-        name, url = resolve_db
-        abort " !  Cannot ingress to a shared database" if "SHARED_DATABASE" == name
-        hpc = heroku_postgresql_client(url)
+        db = resolve_db(:allow_default => true)
+        abort " !  Cannot ingress to a shared database" if "SHARED_DATABASE" == db[:name]
+        hpc = heroku_postgresql_client(db[:url])
         abort " !  The database is not available" unless hpc.get_database[:state] == "available"
-        ingress_message = "#{action} to #{name}..."
+        ingress_message = "#{action} to #{db[:name]}..."
         redisplay ingress_message
         hpc.ingress
         redisplay "#{ingress_message} done\n"
-        return URI.parse(url)
-      end
-
-      def db_flag
-        @db_flag ||= extract_option("--db")
-      end
-
-      def resolve_db
-        db_id = db_flag || "DATABASE"
-        config_vars = heroku.config_vars(app)
-
-        resolver = Resolver.new(db_id, config_vars)
-        display resolver.message
-        unless resolver.url
-          abort " !  Could not resolve database #{db_id}"
-        end
-
-        return resolver.db_id, resolver.url
+        return URI.parse(db[:url])
       end
 
       def display(message, newline=true)
