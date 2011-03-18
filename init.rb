@@ -1,5 +1,15 @@
 module Heroku
   module Command
+    class Addons
+      alias configure_addon_without_pg configure_addon
+      def configure_addon(label, &install_or_upgrade)
+        %w[fork track].each do |opt|
+          val = extract_option("--#{opt}")
+          args << "#{opt}=#{val}" if val
+        end
+        configure_addon_without_pg(label, &install_or_upgrade)
+      end
+    end
     class Pg
       def ingress
         uri = generate_ingress_uri("Granting ingress for 60s")
