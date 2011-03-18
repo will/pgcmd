@@ -23,8 +23,7 @@ module Heroku
       end
 
       def promote
-        abort(" !   Usage: heroku pg:promote --db <DATABASE>") unless specified_db?
-        db = resolve_db
+        db = resolve_db(:required => 'promote')
         abort( "!  DATABASE_URL is already set to #{db[:name]}") if db[:default]
 
         display "Setting config variable DATABASE_URL to #{db[:name]}", false
@@ -37,11 +36,32 @@ module Heroku
         display_info "DATABASE_URL (#{db[:name]})", db[:url]
       end
 
+      def reset
+        db = resolve_db(:required => 'reset')
+
+        display "Resetting #{db[:pretty_name]}"
+        return unless confirm_command
+
+        redisplay 'Resetting... '
+        if "SHARED_DATABASE" == db[:name]
+          heroku.database_reset(app)
+        else
+          heroku_postgresql_client(db[:url]).reset
+        end
+        display 'done'
+      end
+
       private
 
       def resolve_db(options={})
         db_id = db_flag
-        db_id = "DATABASE" if options[:allow_default]
+        unless db_id
+          if options[:allow_default]
+            db_id = "DATABASE"
+          else
+            abort("!   Usage: heroku pg:#{options[:required]} --db <DATABASE>") if options[:required]
+          end
+        end
         config_vars = heroku.config_vars(app)
 
         resolver = Resolver.new(db_id, config_vars)
@@ -71,7 +91,7 @@ module Heroku
 
       def wait_for(db)
         return if "SHARED_DATABASE" == db[:name]
-        name = "database #{db[:name]}#{ "(DATABASE_URL)" if db[:default]}"
+        name = "database #{db[:pretty_name]}"
         ticking do |ticks|
           database = heroku_postgresql_client(db[:url]).get_database
           state = database[:state]
@@ -91,7 +111,7 @@ module Heroku
       end
 
       def display_db_info(db)
-        display("=== #{app} database #{db[:name]} #{"(DATABASE_URL)" if db[:default]}")
+        display("=== #{app} database #{db[:pretty_name]}")
         if db[:name] == "SHARED_DATABASE"
           display_info_shared
         else
@@ -159,7 +179,11 @@ module Heroku
         end
 
         def [](arg)
-           {:name => db_id, :url => url, :default => url==@dbs['DATABASE']}[arg]
+          { :name => db_id,
+            :url => url,
+            :pretty_name => "#{db_id}#{ " (DATABASE_URL)" if default? }",
+            :default => default?
+          }[arg]
         end
 
         def self.all(config_vars)
@@ -167,7 +191,7 @@ module Heroku
           default = parsed['DATABASE']
           dbs = []
           parsed.reject{|k,v| k == 'DATABASE'}.each do |name, url|
-            dbs << {:name => name, :url => url, :default => url==default}
+            dbs << {:name => name, :url => url, :default => url==default, :pretty_name => "#{name}#{' (DATABASE_URL)' if url==default}"}
           end
           dbs.sort {|a,b| a[:default]? -1 : a[:name] <=> b[:name] }
         end
@@ -191,6 +215,10 @@ module Heroku
             end
           end
           return dbs
+        end
+
+        def default?
+          url && url == @dbs['DATABASE']
         end
 
         def resolve
