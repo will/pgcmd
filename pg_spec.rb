@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'rspec'
-require './init'
+require './pg'
 
 include Heroku::Command
 
@@ -89,9 +89,9 @@ describe Pg::Resolver do
 
     it 'returns all with Resolver.all' do
       Pg::Resolver.all(config).should =~ [
-        {:name => 'SHARED_DATABASE', :url => 'postgres://shared', :default => false},
-        {:name => 'PERIWINKLE',      :url => 'postgres://pari',   :default => false},
-        {:name => 'RED',             :url => 'postgres://red',    :default => true}
+        {:name => 'SHARED_DATABASE', :pretty_name => 'SHARED_DATABASE', :url => 'postgres://shared', :default => false},
+        {:name => 'PERIWINKLE',      :pretty_name => 'PERIWINKLE',      :url => 'postgres://pari',   :default => false},
+        {:name => 'RED',     :pretty_name => 'RED (DATABASE_URL)',      :url => 'postgres://red',    :default => true}
       ]
     end
   end
