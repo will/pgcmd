@@ -80,6 +80,10 @@ module Heroku
         return resolver
       end
 
+      def heroku_postgresql_client(url)
+        HerokuPostgresql::Client10.new(url)
+      end
+      
       def specified_db?
         db_flag
       end
