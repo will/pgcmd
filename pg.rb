@@ -83,7 +83,7 @@ module Heroku
       def heroku_postgresql_client(url)
         HerokuPostgresql::Client10.new(url)
       end
-      
+
       def specified_db?
         db_flag
       end
@@ -248,10 +248,16 @@ module Heroku
 
         def default_database_check
           return unless @db_id == 'DATABASE'
-          @db_id = @dbs.find { |k,v|
+          dbs = @dbs.find { |k,v|
             v == @dbs['DATABASE'] && k != 'DATABASE'
-          }.first
-          @messages << "using #{@db_id}"
+          }
+
+          if dbs
+            @db_id = dbs.first
+            @messages << "using #{@db_id}"
+          else
+            @messages << "DATABASE_URL does not match any of your databases"
+          end
         end
 
         def h_pg_color_check

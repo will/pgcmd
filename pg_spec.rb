@@ -82,6 +82,11 @@ describe Pg::Resolver do
       r.url.should == 'postgres://red'
     end
 
+    it 'warns if DATABASE_URL is wrong' do
+      r = Pg::Resolver.new('DATABASE', config.merge!({"DATABASE_URL" => "foo"}))
+      r.message.should =~ /DATABASE_URL does not match/
+    end
+
     it 'is able to get the non default database' do
       r = Pg::Resolver.new('PERIWINKLE', config)
       r.url.should == 'postgres://pari'
