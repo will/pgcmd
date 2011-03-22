@@ -1,4 +1,3 @@
-puts "HELLO"
-require './addons'
-require './pg'
-require './client'
+require 'addons'
+require 'pg'
+require 'client'
