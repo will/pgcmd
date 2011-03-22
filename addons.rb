@@ -1,3 +1,4 @@
+require 'heroku/command'
 module Heroku
   module Command
     class Addons
