@@ -24,17 +24,17 @@ module Heroku
       end
 
       def promote
-        db = resolve_db(:required => 'promote')
-        abort( " !  DATABASE_URL is already set to #{db[:name]}") if db[:default]
+        old_db = Resolver.new("DATABASE", config_vars)
+        new_db = resolve_db(:required => 'promote')
+        abort( " !  DATABASE_URL is already set to #{new_db[:name]}") if new_db[:default]
 
-        display "Setting config variable DATABASE_URL to #{db[:name]}", false
+        display "Promoting DATABASE_URL to #{new_db[:name]}"
         return unless confirm_command
 
-        redisplay "Setting... "
-        heroku.add_config_vars(app, {"DATABASE_URL" => db[:url]})
-        redisplay "Setting... done\n"
+        promote_old_to_new(old_db, new_db)
+        set_database_url(new_db[:url])
 
-        display_info "DATABASE_URL (#{db[:name]})", db[:url]
+        display_info "DATABASE_URL (#{new_db[:name]})", new_db[:url]
       end
 
       def reset
@@ -43,13 +43,13 @@ module Heroku
         display "Resetting #{db[:pretty_name]}"
         return unless confirm_command
 
-        redisplay 'Resetting... '
-        if "SHARED_DATABASE" == db[:name]
-          heroku.database_reset(app)
-        else
-          heroku_postgresql_client(db[:url]).reset
+        working_display 'Resetting' do
+          if "SHARED_DATABASE" == db[:name]
+            heroku.database_reset(app)
+          else
+            heroku_postgresql_client(db[:url]).reset
+          end
         end
-        display 'done'
       end
 
       private
@@ -80,6 +80,23 @@ module Heroku
         return resolver
       end
 
+      def promote_old_to_new(old_db, new_db)
+        return if [new_db, old_db].map(&:name).include? "SHARED_DATABASE"
+        working_display "Promoting"
+      end
+
+      def set_database_url(url)
+        working_display "Updating DATABASE_URL" do
+          heroku.add_config_vars(app, {"DATABASE_URL" => url})
+        end
+      end
+
+      def working_display(msg)
+        redisplay "#{msg}..."
+        yield if block_given?
+        redisplay "#{msg}... done\n"
+      end
+
       def heroku_postgresql_client(url)
         HerokuPostgresql::Client10.new(url)
       end
@@ -94,7 +111,7 @@ module Heroku
 
       def specified_db_or_all
         if specified_db?
-          yield resolve_db#Resolver.new(db_flag, config_vars)
+          yield resolve_db
         else
           Resolver.all(config_vars).each { |db| yield db }
         end
@@ -164,10 +181,7 @@ module Heroku
         abort " !  Cannot ingress to a shared database" if "SHARED_DATABASE" == db[:name]
         hpc = heroku_postgresql_client(db[:url])
         abort " !  The database is not available" unless hpc.get_database[:state] == "available"
-        ingress_message = "#{action} to #{db[:name]}..."
-        redisplay ingress_message
-        hpc.ingress
-        redisplay "#{ingress_message} done\n"
+        working_display("#{action} to #{db[:name]}") { hpc.ingress }
         return URI.parse(db[:url])
       end
 
@@ -190,11 +204,19 @@ module Heroku
         end
 
         def [](arg)
-          { :name => db_id,
+          { :name => name,
             :url => url,
-            :pretty_name => "#{db_id}#{ " (DATABASE_URL)" if default? }",
+            :pretty_name => pretty_name,
             :default => default?
           }[arg]
+        end
+
+        def name
+          db_id
+        end
+
+        def pretty_name
+          "#{db_id}#{ " (DATABASE_URL)" if default? }"
         end
 
         def self.all(config_vars)
