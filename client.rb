@@ -10,25 +10,33 @@ module HerokuPostgresql
 
     def initialize(url)
       @heroku_postgresql_host = ENV["HEROKU_POSTGRESQL_HOST"] || "https://shogun.heroku.com"
-      @database_sha = Digest::SHA2.hexdigest(url)
+      @database_sha = sha(url)
       @heroku_postgresql_resource = RestClient::Resource.new(
         "#{@heroku_postgresql_host}/client/v10/databases",
         :headers => { :heroku_client_version => Version })
     end
 
     def ingress
-      http_put("#{@database_sha}/ingress")
+      http_put "#{@database_sha}/ingress"
     end
 
     def reset
-      http_put("#{@database_sha}/reset")
+      http_put "#{@database_sha}/reset"
     end
 
     def get_database
-      http_get(@database_sha)
+      http_get @database_sha
+    end
+
+    def promote_to(new_db_url)
+      http_put "#{@database_sha}/promote/#{sha new_db_url}"
     end
 
     protected
+
+    def sha(url)
+      Digest::SHA2.hexdigest url
+    end
 
     def sym_keys(c)
       if c.is_a?(Array)

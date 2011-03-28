@@ -82,7 +82,9 @@ module Heroku
 
       def promote_old_to_new(old_db, new_db)
         return if [new_db, old_db].map(&:name).include? "SHARED_DATABASE"
-        working_display "Promoting"
+        working_display "Promoting" do
+          heroku_postgresql_client(old_db[:url]).promote_to new_db[:url]
+        end
       end
 
       def set_database_url(url)
