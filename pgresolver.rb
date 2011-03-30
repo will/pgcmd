@@ -114,7 +114,6 @@ module PGResolver
     def resolve
       url_deprecation_check
       default_database_check
-      h_pg_color_check
       @url = @dbs[@db_id]
     end
 
@@ -139,9 +138,5 @@ module PGResolver
       end
     end
 
-    def h_pg_color_check
-      return unless @db_id =~ /^HEROKU_POSTGRESQL_(\w+)/
-      @messages << "using #{@db_id}"
-    end
   end
 end
