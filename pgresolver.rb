@@ -100,7 +100,7 @@ module PGResolver
           dbs['DATABASE'] = val
         when 'SHARED_DATABASE_URL'
           dbs['SHARED_DATABASE'] = val
-        when /^(\w+)_URL$/
+        when /^(HEROKU_POSTGRESQL_\w+)_URL$/
           dbs[$+] = val # $+ is the last match
         end
       end
