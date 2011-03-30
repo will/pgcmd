@@ -1,5 +1,10 @@
 module PGResolver
   private
+
+  def config_vars
+    @config_vars ||= heroku.config_vars(app)
+  end
+
   def resolve_db(options={})
     db_id = db_flag
     unless db_id
@@ -9,21 +14,22 @@ module PGResolver
         abort(" !  Usage: heroku #{options[:required]} --db <DATABASE>") if options[:required]
       end
     end
-    config_vars = heroku.config_vars(app)
 
     resolver = Resolver.new(db_id, config_vars)
     display resolver.message
-    unless resolver.url
-      display " !  Could not resolve database #{db_id}"
-      display " !"
-      display " !  Available databases: "
-      Resolver.all(config_vars).each do |db|
-        display " !   #{db[:pretty_name]}"
-      end
-      abort
-    end
+    abort_with_database_list(db_id) unless resolver.url
 
     return resolver
+  end
+
+  def abort_with_database_list(failed_id)
+    display " !  Could not resolve database #{failed_id}"
+    display " !"
+    display " !  Available databases: "
+    Resolver.all(config_vars).each do |db|
+      display " !   #{db[:pretty_name]}"
+    end
+    abort
   end
 
   def specified_db?
