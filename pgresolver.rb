@@ -100,7 +100,7 @@ module PGResolver
           dbs['DATABASE'] = val
         when 'SHARED_DATABASE_URL'
           dbs['SHARED_DATABASE'] = val
-        when /^HEROKU_POSTGRESQL_(\w+)_URL$/
+        when /^(\w+)_URL$/
           dbs[$+] = val # $+ is the last match
         end
       end
@@ -141,7 +141,6 @@ module PGResolver
 
     def h_pg_color_check
       return unless @db_id =~ /^HEROKU_POSTGRESQL_(\w+)/
-      @db_id = $+
       @messages << "using #{@db_id}"
     end
   end
