@@ -1,20 +1,21 @@
 require 'rubygems'
 require 'rspec'
-require './pg'
+require './pgresolver'
 
-include Heroku::Command
+#include Heroku::Command
+include PGResolver
 
-describe Pg::Resolver do
+describe Resolver do
   context "pass in *_URL" do
-    let(:r) { Pg::Resolver.new "HEROKU_POSTGRESQL_SOME_URL", "HEROKU_POSTGRESQL_SOME_URL" => 'something'}
+    let(:r) { Resolver.new "HEROKU_POSTGRESQL_SOME_URL", "HEROKU_POSTGRESQL_SOME_URL" => 'something'}
 
     it 'should warn to not add in _URL, and proceed without it' do
-      r.message.should == "HEROKU_POSTGRESQL_SOME_URL is deprecated, please use HEROKU_POSTGRESQL_SOME\nusing SOME"
+      r.message.should == "HEROKU_POSTGRESQL_SOME_URL is deprecated, please use HEROKU_POSTGRESQL_SOME"
     end
 
     it 'should have [] access' do
       r[:url].should == 'something'
-      r[:name].should == 'SOME'
+      r[:name].should == 'HEROKU_POSTGRESQL_SOME'
     end
   end
 
@@ -25,13 +26,13 @@ describe Pg::Resolver do
     end
 
     it 'returns the shared url when asked for DATABASE' do
-      r = Pg::Resolver.new("DATABASE", config)
+      r = Resolver.new("DATABASE", config)
       r.url.should == 'postgres://shared'
       r.message.should == "using SHARED_DATABASE"
     end
 
     it 'reutrns the shared url when asked for SHARED_DATABASE' do
-      r = Pg::Resolver.new("SHARED_DATABASE", config)
+      r = Resolver.new("SHARED_DATABASE", config)
       r.url.should == 'postgres://shared'
       r.message.should_not be
     end
@@ -44,28 +45,27 @@ describe Pg::Resolver do
     end
 
     it 'returns the dedicated url when asked for DATABASE' do
-      r = Pg::Resolver.new('DATABASE', config)
+      r = Resolver.new('DATABASE', config)
       r.url.should == 'postgres://dedicated'
-      r.message.should == 'using PERIWINKLE'
+      r.message.should == 'using HEROKU_POSTGRESQL_PERIWINKLE'
     end
 
-    it 'returns the dedicated url when asked for COLOR' do
-      r = Pg::Resolver.new('PERIWINKLE', config)
-      r.url.should == 'postgres://dedicated'
+    it 'fails when asked for just COLOR' do
+      r = Resolver.new('PERIWINKLE', config)
+      r.url.should_not be
       r.message.should_not be
     end
 
     it 'returns the dedicated url when asked for H_PG_COLOR' do
-      r = Pg::Resolver.new('HEROKU_POSTGRESQL_PERIWINKLE', config)
+      r = Resolver.new('HEROKU_POSTGRESQL_PERIWINKLE', config)
       r.url.should == 'postgres://dedicated'
-      r.message.should == 'using PERIWINKLE'
+      r.message.should_not be
     end
 
     it 'returns the dedicated url when asked for H_PG_COLOR_URL' do
-      r = Pg::Resolver.new('HEROKU_POSTGRESQL_PERIWINKLE_URL', config)
+      r = Resolver.new('HEROKU_POSTGRESQL_PERIWINKLE_URL', config)
       r.url.should == 'postgres://dedicated'
       r.message.should =~ /deprecated/
-      r.message.should =~ /using PERIWINKLE/
     end
   end
 
@@ -78,25 +78,25 @@ describe Pg::Resolver do
     end
 
     it 'maps default correctly' do
-      r = Pg::Resolver.new('DATABASE', config)
+      r = Resolver.new('DATABASE', config)
       r.url.should == 'postgres://red'
     end
 
     it 'warns if DATABASE_URL is wrong' do
-      r = Pg::Resolver.new('DATABASE', config.merge!({"DATABASE_URL" => "foo"}))
+      r = Resolver.new('DATABASE', config.merge!({"DATABASE_URL" => "foo"}))
       r.message.should =~ /DATABASE_URL does not match/
     end
 
     it 'is able to get the non default database' do
-      r = Pg::Resolver.new('PERIWINKLE', config)
+      r = Resolver.new('HEROKU_POSTGRESQL_PERIWINKLE', config)
       r.url.should == 'postgres://pari'
     end
 
     it 'returns all with Resolver.all' do
-      Pg::Resolver.all(config).should =~ [
-        {:name => 'SHARED_DATABASE', :pretty_name => 'SHARED_DATABASE', :url => 'postgres://shared', :default => false},
-        {:name => 'PERIWINKLE',      :pretty_name => 'PERIWINKLE',      :url => 'postgres://pari',   :default => false},
-        {:name => 'RED',     :pretty_name => 'RED (DATABASE_URL)',      :url => 'postgres://red',    :default => true}
+      Resolver.all(config).should =~ [
+        {:name => 'SHARED_DATABASE',              :pretty_name => 'SHARED_DATABASE',                      :url => 'postgres://shared', :default => false},
+        {:name => 'HEROKU_POSTGRESQL_PERIWINKLE', :pretty_name => 'HEROKU_POSTGRESQL_PERIWINKLE',         :url => 'postgres://pari',   :default => false},
+        {:name => 'HEROKU_POSTGRESQL_RED',        :pretty_name => 'HEROKU_POSTGRESQL_RED (DATABASE_URL)', :url => 'postgres://red',    :default => true}
       ]
     end
   end
