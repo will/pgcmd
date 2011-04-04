@@ -11,6 +11,11 @@ module Heroku
             db = Resolver.new(val, config_vars)
             display db.message if db.message
             abort_with_database_list(val) unless db[:url]
+
+            db_plan = HerokuPostgresql::Client10.new(db[:url]).get_database[:plan]
+            addon_plan = args.first.split(/:/)[1] || 'ronin'
+            abort " !  only another #{db_plan} can #{opt} #{db[:name]}" unless db_plan == addon_plan
+
             args << "#{opt}=#{db[:url]}"
           end
         end
