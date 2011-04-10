@@ -1,5 +1,9 @@
 require "heroku/helpers"
-require "heroku/json"
+begin
+  require "heroku/json"
+rescue LoadError
+  require "json/pure"
+end
 require 'digest/sha2'
 
 module HerokuPostgresql

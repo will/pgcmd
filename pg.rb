@@ -94,7 +94,14 @@ module Heroku
             redisplay("The #{name} encountered an error", true)
             break
           else
-            redisplay("#{state.capitalize} #{name} #{spinner(ticks)}", false)
+            if state == "downloading"
+              msg = "(#{database[:database_dir_size]} bytes)"
+            elsif state == "standby"
+                msg = "(#{database[:current_transaction]}/#{database[:target_transaction]})"
+            else
+              msg = ''
+            end
+            redisplay("#{state.capitalize} #{name} #{spinner(ticks)} #{msg}", false)
           end
         end
       end
