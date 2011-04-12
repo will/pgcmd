@@ -12,14 +12,17 @@ module Heroku
             display db.message if db.message
             abort_with_database_list(val) unless db[:url]
 
-            db = HerokuPostgresql::Client10.new(db[:url]).get_database
+            url = db[:url]
+            db = HerokuPostgresql::Client10.new(url).get_database
             db_plan = db[:plan]
             version = db[:postgresql_version]
+
+            abort " !  You cannot fork a database unless it is currently available." unless db[:state] == "available"
             abort " !  PostgreSQL v#{version} cannot be #{opt}ed. Please upgrade to a newer version." if '8' == version.split(/\./).first
             addon_plan = args.first.split(/:/)[1] || 'ronin'
             abort " !  Only another #{db_plan} can #{opt} #{db[:name]}" unless db_plan == addon_plan
 
-            args << "#{opt}=#{db[:url]}"
+            args << "#{opt}=#{url}"
           end
         end
         configure_addon_without_pg(label, &install_or_upgrade)
