@@ -95,7 +95,7 @@ module Heroku
             break
           else
             if state == "downloading"
-              msg = "(#{database[:database_dir_size]} bytes)"
+              msg = "(#{database[:database_dir_size].to_i} bytes)"
             elsif state == "standby"
                 msg = "(#{database[:current_transaction]}/#{database[:target_transaction]})"
                 if database[:tracking]
