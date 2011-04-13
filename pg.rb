@@ -98,6 +98,7 @@ module Heroku
               msg = "(#{database[:database_dir_size]} bytes)"
             elsif state == "standby"
                 msg = "(#{database[:current_transaction]}/#{database[:target_transaction]})"
+                break if database[:tracking]
             else
               msg = ''
             end
