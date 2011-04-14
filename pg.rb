@@ -139,6 +139,14 @@ module Heroku
             "#{database[:num_tables]} table#{database[:num_tables] == 1 ? "" : "s"}")
         end
 
+        if database[:forked_from]
+           display_info("Forked from ", database[:forked_from])
+        end
+
+        if database[:tracking]
+           display_info("Tracking ", database[:tracking])
+        end
+
         if version = database[:postgresql_version]
           display_info("PG version", version)
         end
@@ -152,7 +160,8 @@ module Heroku
         db = resolve_db(:allow_default => true)
         abort " !  Cannot ingress to a shared database" if "SHARED_DATABASE" == db[:name]
         hpc = heroku_postgresql_client(db[:url])
-        abort " !  The database is not available" unless hpc.get_database[:state] == "available"
+        state = hpc.get_database[:state]
+        abort " !  The database is not available" unless ["available", "standby"].member?(state)
         working_display("#{action} to #{db[:name]}") { hpc.ingress }
         return URI.parse(db[:url])
       end

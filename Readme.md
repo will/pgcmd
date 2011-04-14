@@ -6,9 +6,7 @@ Replication
 ============
 Heroku PostgreSQL now supports two new modes, fork and track.
 
-Forking will give you an exact clone of an existing database up to the point when the --fork command was issued.
-
-Tracking will give you a database which follows its leader with a low latency, usually on the order of a second or two.
+Forking will give you an exact clone of an existing database up to the point when the --fork command was issued. Tracking will give you a database which follows its leader with a low latency, usually on the order of a second or two.
 
 We've done a bunch of work behind the scenes to make everything Just Work with a few caveats. First, you can only fork and track databases of the same plan, and second you can only fork and track PostgreSQL 9.0 databases. 8.4 databases do not support this technology.
 
@@ -27,7 +25,7 @@ Please ensure your heroku gem is recent by running a "gem install heroku".
 
 Changes to existing commands
 ============================
-* For consistency with the new addons:remove notation, all pg and pgbackups namespace commands now accept the database (--db) flag in the following form: HEROKU_POSTGRESQL_COLOR.
+* For consistency with the new addons:remove notation, all pg and pgbackups namespace commands now accept the database flag in the following form: HEROKU_POSTGRESQL_COLOR.
 * Commands which make no irreversible changes to your database will default to the current value of DATABASE_URL.
 * pg:info and pg:wait do not take an argument, they simply operate on all databases attached to your application
 

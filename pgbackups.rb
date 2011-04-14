@@ -7,7 +7,7 @@ module Heroku::Command
     include PGResolver
 
     Heroku::Command::Help.group("pgbackups") do |group|
-      group.command "pgbackups:capture [--db <DB_ID>]",           "capture a backup from database ID (default: DATABASE_URL)"
+      group.command "pgbackups:capture [<DB_ID>]",           "capture a backup from database ID (default: DATABASE_URL)"
     end
 
     def capture

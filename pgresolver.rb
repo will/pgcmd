@@ -11,7 +11,7 @@ module PGResolver
       if options[:allow_default]
         db_id = "DATABASE"
       else
-        abort(" !  Usage: heroku #{options[:required]} --db <DATABASE>") if options[:required]
+        abort(" !  Usage: heroku #{options[:required]} <DATABASE>") if options[:required]
       end
     end
 
@@ -37,7 +37,7 @@ module PGResolver
   end
 
   def db_flag
-    @db_flag ||= extract_option("--db")
+    @db_flag ||= args.shift
   end
 
   def specified_db_or_all
