@@ -100,4 +100,18 @@ describe Resolver do
       ]
     end
   end
+
+  context "dev mode feature" do
+    it 'allows an alternate addon prefix to be specified via env HEROKU_POSTGRESQL_ADDON_PREFIX' do
+      old_env = ENV["HEROKU_POSTGRESQL_ADDON_PREFIX"]
+      ENV["HEROKU_POSTGRESQL_ADDON_PREFIX"] = "SHOGUN_STAGING"
+      config = { 'DATABASE_URL' => 'postgres://red',
+                 'SHARED_DATABASE_URL' => 'postgres://shared',
+                 'HEROKU_POSTGRESQL_PERIWINKLE_URL' => 'postgres://pari',
+                 'SHOGUN_STAGING_RED_URL' => 'postgres://red' }
+      r = Resolver.new('SHOGUN_STAGING_RED', config)
+      r.url.should == 'postgres://red'
+      ENV["HEROKU_POSTGRESQL_ADDON_PREFIX"] = old_env
+    end
+  end
 end
