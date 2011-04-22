@@ -32,8 +32,8 @@ module HerokuPostgresql
       http_get @database_sha
     end
 
-    def promote_to(new_db_url)
-      http_put "#{@database_sha}/promote"
+    def promote(leader_url)
+      http_put "#{@database_sha}/promote/sha(#{leader_url})"
     end
 
     protected

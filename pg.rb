@@ -25,17 +25,17 @@ module Heroku
       end
 
       def promote
-        old_db = Resolver.new("DATABASE", config_vars)
-        new_db = resolve_db(:required => 'pg:promote')
-        abort( " !  DATABASE_URL is already set to #{new_db[:name]}") if new_db[:default]
+        leader_db = Resolver.new("DATABASE", config_vars) || {}
+        follower_db = resolve_db(:required => 'pg:promote')
+        abort( " !  DATABASE_URL is already set to #{follower_db[:name]}") if follower_db[:default]
 
-        display "Promoting DATABASE_URL to #{new_db[:name]}"
+        display "Promoting #{follower_db[:name]} to DATABASE_URL"
         return unless confirm_command
 
-        promote_old_to_new(old_db, new_db)
-        set_database_url(new_db[:url])
+        promote_to_primary(follower_db, leader_db)
+        set_database_url(follower_db[:url])
 
-        display_info "DATABASE_URL (#{new_db[:name]})", new_db[:url]
+        display_info "DATABASE_URL (#{follower_db[:name]})", follower_db[:url]
       end
 
       def reset
@@ -55,10 +55,10 @@ module Heroku
 
       private
 
-      def promote_old_to_new(old_db, new_db)
-        return if [new_db, old_db].map(&:name).include? "SHARED_DATABASE"
+      def promote_to_primary(follower_db, leader_db)
+        return if follower_db[:name].include? "SHARED_DATABASE"
         working_display "Promoting" do
-          heroku_postgresql_client(old_db[:url]).promote_to new_db[:url]
+          heroku_postgresql_client(follower_db[:url]).promote leader_db[:url]
         end
       end
 
