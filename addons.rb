@@ -20,7 +20,11 @@ module Heroku
             abort " !  You cannot fork a database unless it is currently available." unless db[:state] == "available"
             abort " !  PostgreSQL v#{version} cannot be #{opt}ed. Please upgrade to a newer version." if '8' == version.split(/\./).first
             addon_plan = args.first.split(/:/)[1] || 'ronin'
-            abort " !  Only another #{db_plan} can #{opt} #{db[:name]}" unless db_plan == addon_plan
+            if ["ronin", "fugu"].member? addon_plan
+              abort " !  Can only #{opt} #{db_plan} database to a ronin or a fugu." unless ["ronin", "fugu"].member? db_plan
+            else
+              abort " !  Can't #{opt} a #{db_plan} database to a ronin or a fugu." if ["ronin", "fugu"].member? db_plan
+            end
 
             args << "#{opt}=#{url}"
           end
