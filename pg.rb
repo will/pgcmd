@@ -24,6 +24,18 @@ module Heroku
         specified_db_or_all { |db| wait_for db }
       end
 
+      def promote
+        follower_db = resolve_db(:required => 'pg:promote')
+        abort( " !  DATABASE_URL is already set to #{follower_db[:name]}") if follower_db[:default]
+
+        display "Promoting #{follower_db[:name]} to DATABASE_URL"
+        return unless confirm_command
+
+        set_database_url(follower_db[:url])
+
+        display_info "DATABASE_URL (#{follower_db[:name]})", follower_db[:url]
+      end
+
       def lead
         leader_db = Resolver.new("DATABASE", config_vars) || {}
         follower_db = resolve_db(:required => 'pg:promote')
