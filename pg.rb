@@ -12,7 +12,7 @@ module Heroku
         uri = generate_ingress_uri("Connecting")
         ENV["PGPASSWORD"] = uri.password
         ENV["PGSSLMODE"]  = 'require'
-        system "psql -U #{uri.user} -h #{uri.host} #{uri.path[1..-1]}"
+        system "psql -U #{uri.user} -h #{uri.host} -p #{uri.port || 5432} #{uri.path[1..-1]}"
       end
 
       def info
