@@ -42,7 +42,7 @@ module Heroku
         display "Untracking the leader #{follower_db[:name]}"
         return unless confirm_command
 
-        promote_to_primary(follower_db, leader_db)
+        promote_to_primary(follower_db, {})
 
         display_info "#{follower_db[:name]} stopped tracking", follower_db[:url]
       end
