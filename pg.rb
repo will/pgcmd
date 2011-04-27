@@ -42,7 +42,10 @@ module Heroku
         display "Untracking the leader #{follower_db[:name]}"
         return unless confirm_command
 
-        untrack(follower_db)
+        return if follower_db[:name].include? "SHARED_DATABASE"
+        working_display "Untracking" do
+          heroku_postgresql_client(follower_db[:url]).untrack
+        end
 
         display_info "#{follower_db[:name]} stopped tracking", follower_db[:url]
       end
@@ -63,13 +66,6 @@ module Heroku
       end
 
       private
-
-      def untrack(follower_db)
-        return if follower_db[:name].include? "SHARED_DATABASE"
-        working_display "Promoting" do
-          heroku_postgresql_client(follower_db[:url]).promote
-        end
-      end
 
       def set_database_url(url)
         working_display "Updating DATABASE_URL" do
