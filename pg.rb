@@ -42,7 +42,7 @@ module Heroku
         display "Untracking the leader #{follower_db[:name]}"
         return unless confirm_command
 
-        promote_to_primary(follower_db, {})
+        untrack(follower_db)
 
         display_info "#{follower_db[:name]} stopped tracking", follower_db[:url]
       end
@@ -64,10 +64,10 @@ module Heroku
 
       private
 
-      def promote_to_primary(follower_db, leader_db)
+      def untrack(follower_db)
         return if follower_db[:name].include? "SHARED_DATABASE"
         working_display "Promoting" do
-          heroku_postgresql_client(follower_db[:url]).promote leader_db[:url]
+          heroku_postgresql_client(follower_db[:url]).promote
         end
       end
 
