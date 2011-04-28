@@ -2,12 +2,26 @@ module Heroku
   module Command
     class Pg
       include PGResolver
+      # pg:ingress [DATABASE]
+      #
+      # allow direct connections to the database from this IP for one minute
+      #
+      # (dedicated only)
+      # defaults to DATABASE_URL databases if no DATABASE is specified
+      #
       def ingress
         uri = generate_ingress_uri("Granting ingress for 60s")
         display "Connection info string:"
         display "   \"dbname=#{uri.path[1..-1]} host=#{uri.host} user=#{uri.user} password=#{uri.password} sslmode=required\""
       end
 
+      # pg:psql [DATABASE]
+      #
+      # open a psql shell to the database
+      #
+      # (dedicated only)
+      # defaults to DATABASE_URL databases if no DATABASE is specified
+      #
       def psql
         uri = generate_ingress_uri("Connecting")
         ENV["PGPASSWORD"] = uri.password
@@ -15,15 +29,31 @@ module Heroku
         system "psql -U #{uri.user} -h #{uri.host} -p #{uri.port || 5432} #{uri.path[1..-1]}"
       end
 
+      # pg:info [DATABASE]
+      #
+      # display database information
+      #
+      # defaults to all databases if no DATABASE is specified
+      #
       def info
         specified_db_or_all { |db| display_db_info db }
       end
 
+      # pg:wait [DATABASE]
+      #
+      # monitor database creation, exit when complete
+      #
+      # defaults to all databases if no DATABASE is specified
+      #
       def wait
         display "Checking availablity of all databases" unless specified_db?
         specified_db_or_all { |db| wait_for db }
       end
 
+      # pg:promote <DATABASE>
+      #
+      # sets DATABASE as your DATABASE_URL
+      #
       def promote
         follower_db = resolve_db(:required => 'pg:promote')
         abort( " !  DATABASE_URL is already set to #{follower_db[:name]}") if follower_db[:default]
@@ -36,6 +66,10 @@ module Heroku
         display_info "DATABASE_URL (#{follower_db[:name]})", follower_db[:url]
       end
 
+      # pg:untrack <DATABASE>
+      #
+      # diverge DATABASE from its leader
+      #
       def untrack
         follower_db = resolve_db(:required => 'pg:untrack')
 
@@ -50,6 +84,9 @@ module Heroku
         display_info "#{follower_db[:name]} stopped tracking", follower_db[:url]
       end
 
+      # pg:reset <DATABASE>
+      #
+      # delete all data in DATABASE
       def reset
         db = resolve_db(:required => 'pg:reset')
 

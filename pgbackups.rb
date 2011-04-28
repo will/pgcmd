@@ -1,4 +1,3 @@
-require "heroku/commands/help"
 require "heroku/pgutils"
 require "pgbackups/client"
 
@@ -6,10 +5,14 @@ module Heroku::Command
   class Pgbackups < BaseWithApp
     include PGResolver
 
-    Heroku::Command::Help.group("pgbackups") do |group|
-      group.command "pgbackups:capture [<DB_ID>]",           "capture a backup from database ID (default: DATABASE_URL)"
-    end
-
+    # pgbackups:capture [DATABASE]
+    #
+    # capture a backup from a database id
+    #
+    # if no DATABASE is specified, defaults to DATABASE_URL
+    #
+    # -e, --expire  # if no slots are available to capture, delete the oldest backup to make room
+    #
     def capture
       db = resolve_db(:allow_default => true)
 
@@ -33,9 +36,17 @@ module Heroku::Command
         message += "\n !    The database credentials are incorrect."           if backup['log'] =~ /psql: FATAL:/
         abort(message)
       end
-
     end
 
+    # pgbackups:restore [BACKUP_ID]
+    #
+    # restore a backup to a database id
+    #
+    # if no BACKUP_ID is specified, uses the most recent backup
+    #
+    # -d, --db DATABASE  # the database id to target for the restore
+    #
+    
     def restore
       db = resolve_db(:allow_default => true)
       to_name = db[:name]
