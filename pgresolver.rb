@@ -124,6 +124,7 @@ module PGResolver
     def resolve
       url_deprecation_check
       default_database_check
+      color_only_check
       @url = @dbs[@db_id]
     end
 
@@ -148,5 +149,12 @@ module PGResolver
       end
     end
 
+    def color_only_check
+      color_key = "#{self.class.addon_prefix}_#{@db_id}"
+      if @dbs[color_key]
+        @db_id = color_key
+        @messages << "using #{@db_id}"
+      end
+    end
   end
 end

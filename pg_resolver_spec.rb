@@ -2,7 +2,6 @@ require 'rubygems'
 require 'rspec'
 require './pgresolver'
 
-#include Heroku::Command
 include PGResolver
 
 describe Resolver do
@@ -50,10 +49,10 @@ describe Resolver do
       r.message.should == 'using HEROKU_POSTGRESQL_PERIWINKLE'
     end
 
-    it 'fails when asked for just COLOR' do
+    it 'works when asked for just COLOR' do
       r = Resolver.new('PERIWINKLE', config)
-      r.url.should_not be
-      r.message.should_not be
+      r.url.should == 'postgres://dedicated'
+      r.message.should == 'using HEROKU_POSTGRESQL_PERIWINKLE'
     end
 
     it 'returns the dedicated url when asked for H_PG_COLOR' do
