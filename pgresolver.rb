@@ -48,7 +48,7 @@ module PGResolver
     end
   end
 
-  def display(message, newline=true)
+  def display(message='', newline=true)
     super if message
   end
 
