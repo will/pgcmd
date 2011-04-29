@@ -7,7 +7,7 @@ module Heroku
       alias configure_addon_without_pg configure_addon
       def configure_addon(label, &install_or_upgrade)
         %w[fork track].each do |opt|
-          if val = extract_option("--#{opt}")
+          if val = legacy_extract_option("--#{opt}")
             resolved = Resolver.new(val, config_vars)
             display resolved.message if resolved.message
             abort_with_database_list(val) unless resolved[:url]
@@ -37,6 +37,22 @@ module Heroku
         end
         configure_addon_without_pg(label, &install_or_upgrade)
       end
+      private
+        def legacy_extract_option(options, default=true)
+          values = options.is_a?(Array) ? options : [options]
+          return unless opt_index = args.select { |a| values.include? a }.first
+          opt_position = args.index(opt_index) + 1
+          if args.size > opt_position && opt_value = args[opt_position]
+            if opt_value.include?('--')
+              opt_value = nil
+            else
+              args.delete_at(opt_position)
+            end
+          end
+          opt_value ||= default
+          args.delete(opt_index)
+          block_given? ? yield(opt_value) : opt_value
+        end
     end
   end
 end
