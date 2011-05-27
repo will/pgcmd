@@ -6,7 +6,7 @@ module Heroku
 
       alias configure_addon_without_pg configure_addon
       def configure_addon(label, &install_or_upgrade)
-        %w[fork track].each do |opt|
+        %w[fork follow].each do |opt|
           if val = legacy_extract_option("--#{opt}")
             resolved = Resolver.new(val, config_vars)
             display resolved.message if resolved.message

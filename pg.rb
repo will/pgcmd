@@ -66,22 +66,22 @@ module Heroku
         display_info "DATABASE_URL (#{follower_db[:name]})", follower_db[:url]
       end
 
-      # pg:untrack <DATABASE>
+      # pg:unfollow <DATABASE>
       #
       # diverge DATABASE from its leader
       #
-      def untrack
-        follower_db = resolve_db(:required => 'pg:untrack')
+      def unfollow
+        follower_db = resolve_db(:required => 'pg:unfollow')
 
-        display "Untracking the leader #{follower_db[:name]}"
+        display "Unfollowing the leader #{follower_db[:name]}"
         return unless confirm_command
 
         return if follower_db[:name].include? "SHARED_DATABASE"
-        working_display "Untracking" do
-          heroku_postgresql_client(follower_db[:url]).untrack
+        working_display "Unfollowing" do
+          heroku_postgresql_client(follower_db[:url]).unfollow
         end
 
-        display_info "#{follower_db[:name]} stopped tracking", follower_db[:url]
+        display_info "#{follower_db[:name]} stopped following", follower_db[:url]
       end
 
       # pg:reset <DATABASE>
@@ -141,7 +141,7 @@ module Heroku
             elsif state == "standby"
                 msg = "(#{database[:current_transaction]}/#{database[:target_transaction]})"
                 if database[:tracking]
-                  redisplay("The #{name} is now tracking", true)
+                  redisplay("The #{name} is now following", true)
                   break
                 end
             else
@@ -186,7 +186,7 @@ module Heroku
         end
 
         if database[:tracking]
-           display_info("Tracking ", database[:tracking])
+           display_info("Following ", database[:tracking])
         end
 
         if version = database[:postgresql_version]
