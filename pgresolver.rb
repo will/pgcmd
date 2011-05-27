@@ -143,7 +143,6 @@ module PGResolver
 
       if dbs
         @db_id = dbs.first
-        @messages << "using #{@db_id}"
       else
         @messages << "DATABASE_URL does not match any of your databases"
       end
@@ -153,7 +152,6 @@ module PGResolver
       color_key = "#{self.class.addon_prefix}_#{@db_id}"
       if @dbs[color_key]
         @db_id = color_key
-        @messages << "using #{@db_id}"
       end
     end
   end
