@@ -66,9 +66,9 @@ module Heroku
         display_info "DATABASE_URL (#{follower_db[:name]})", follower_db[:url]
       end
 
-      # pg:unfollow <DATABASE>
+      # pg:unfollow <REPLICA>
       #
-      # diverge DATABASE from its leader
+      # stop a replica from following and make it a read/write database
       #
       def unfollow
         follower_db = resolve_db(:required => 'pg:unfollow')
