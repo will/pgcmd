@@ -153,7 +153,7 @@ module Heroku
       end
 
       def display_db_info(db)
-        display("=== #{app} database #{db[:pretty_name]}")
+        display("=== #{db[:pretty_name]}")
         if db[:name] == "SHARED_DATABASE"
           display_info_shared
         else
@@ -163,37 +163,37 @@ module Heroku
 
       def display_info_shared
         attrs = heroku.info(app)
-        display_info("Data size", "#{size_format(attrs[:database_size].to_i)}")
+        display_info("Data Size", "#{size_format(attrs[:database_size].to_i)}")
       end
 
       def display_info_dedicated(db)
         database = heroku_postgresql_client(db[:url]).get_database
 
-        display_info("Plan", database[:plan].capitalize)
+        display_info "Plan", database[:plan].capitalize
 
-        display_info("State",
-            "#{database[:state]} for " +
-            "#{delta_format(Time.parse(database[:state_updated_at]))}")
+        display_info "Status", database[:state].capitalize
 
-        if database[:num_bytes] && database[:num_tables]
-          display_info("Data size",
-            "#{size_format(database[:num_bytes])} in " +
-            "#{database[:num_tables]} table#{database[:num_tables] == 1 ? "" : "s"}")
+        if database[:num_bytes]
+          display_info "Data Size", size_format(database[:num_bytes])
+        end
+
+        if database[:num_tables]
+          display_info "Tables", database[:num_tables]
         end
 
         if database[:forked_from]
-           display_info("Forked from ", database[:forked_from])
+           display_info "Forked from", database[:forked_from]
         end
 
         if database[:tracking]
-           display_info("Following ", database[:tracking])
+           display_info "Following", database[:tracking]
         end
 
         if version = database[:postgresql_version]
-          display_info("PG version", version)
+          display_info "PG version", version
         end
 
-        display_info("Born", time_format(database[:created_at]))
+        display_info("Created", time_format(database[:created_at]))
         display_info("Mem Used", "%0.2f %" % database[:mem_percent_used]) unless [nil, ""].include? database[:mem_percent_used]
         display_info("CPU Used", "%0.2f %" % (100 - database[:cpu_idle].to_f)) unless [nil, ""].include? database[:cpu_idle]
       end
