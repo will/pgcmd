@@ -167,16 +167,16 @@ module Heroku
       end
 
       def display_info_dedicated(db)
-        database = heroku_postgresql_client(db[:url]).get_database
+        db_info = heroku_postgresql_client(db[:url]).get_database
 
-        display_info "Plan",        database[:plan].capitalize         if database[:plan]
-        display_info "Status",      database[:state].capitalize        if database[:state]
-        display_info "Data Size",   size_format(database[:num_bytes])  if database[:num_bytes]
-        display_info "Tables",      database[:num_tables]              if database[:num_tables]
-        display_info "Forked From", database[:forked_from]             if database[:forked_from]
-        display_info "Following",   database[:tracking]                if database[:tracking]
-        display_info "PG Version",  database[:postgresql_version]      if database[:postgresql_version]
-        display_info "Created",     time_format(database[:created_at]) if database[:created_at]
+        display_info "Plan",        db_info[:plan].capitalize         if db_info[:plan]
+        display_info "Status",      db_info[:state].capitalize        if db_info[:state]
+        display_info "Data Size",   size_format(db_info[:num_bytes])  if db_info[:num_bytes]
+        display_info "Tables",      db_info[:num_tables]              if db_info[:num_tables]
+        display_info "Forked From", db_info[:forked_from]             if db_info[:forked_from]
+        display_info "Following",   db_info[:tracking]                if db_info[:tracking]
+        display_info "PG Version",  db_info[:postgresql_version]      if db_info[:postgresql_version]
+        display_info "Created",     time_format(db_info[:created_at]) if db_info[:created_at]
       end
 
       def generate_ingress_uri(action)
