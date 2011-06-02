@@ -32,8 +32,8 @@ module HerokuPostgresql
       http_get @database_sha
     end
 
-    def untrack
-      http_put "#{@database_sha}/untrack"
+    def unfollow
+      http_put "#{@database_sha}/unfollow"
     end
 
     protected

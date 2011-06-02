@@ -72,8 +72,18 @@ module Heroku
       #
       def unfollow
         follower_db = resolve_db(:required => 'pg:unfollow')
+        follower_name = follower_db[:pretty_name]
+        follower_db_info = heroku_postgresql_client(follower_db[:url]).get_database
+        origin_db_url = follower_db_info[:following]
 
-        display "Unfollowing the leader #{follower_db[:name]}"
+        unless origin_db_url
+          display " !    #{follower_name} is not following another database"
+          return
+        end
+        origin_name = name_from_url(origin_db_url)
+
+        display " !    #{follower_name} will become writable and no longer"
+        display " !    follow #{origin_name}. This cannot be undone.", false
         return unless confirm_command
 
         return if follower_db[:name].include? "SHARED_DATABASE"
@@ -140,7 +150,7 @@ module Heroku
               msg = "(#{database[:database_dir_size].to_i} bytes)"
             elsif state == "standby"
                 msg = "(#{database[:current_transaction]}/#{database[:target_transaction]})"
-                if database[:tracking]
+                if database[:following]
                   redisplay("The #{name} is now following", true)
                   break
                 end
@@ -173,10 +183,10 @@ module Heroku
         display_info "Status",      db_info[:state].capitalize           if db_info[:state]
         display_info "Data Size",   size_format(db_info[:num_bytes])     if db_info[:num_bytes]
         display_info "Tables",      db_info[:num_tables]                 if db_info[:num_tables]
-        display_info "Forked From", name_from_url(db_info[:forked_from]) if db_info[:forked_from]
-        display_info "Following",   name_from_url(db_info[:following])   if db_info[:following]
         display_info "PG Version",  db_info[:postgresql_version]         if db_info[:postgresql_version]
         display_info "Created",     time_format(db_info[:created_at])    if db_info[:created_at]
+        display_info "Forked From", name_from_url(db_info[:forked_from]) if db_info[:forked_from]
+        display_info "Following",   name_from_url(db_info[:following])   if db_info[:following]
       end
 
       def generate_ingress_uri(action)
