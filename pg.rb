@@ -169,33 +169,14 @@ module Heroku
       def display_info_dedicated(db)
         database = heroku_postgresql_client(db[:url]).get_database
 
-        display_info "Plan", database[:plan].capitalize
-
-        display_info "Status", database[:state].capitalize
-
-        if database[:num_bytes]
-          display_info "Data Size", size_format(database[:num_bytes])
-        end
-
-        if database[:num_tables]
-          display_info "Tables", database[:num_tables]
-        end
-
-        if database[:forked_from]
-           display_info "Forked from", database[:forked_from]
-        end
-
-        if database[:tracking]
-           display_info "Following", database[:tracking]
-        end
-
-        if version = database[:postgresql_version]
-          display_info "PG version", version
-        end
-
-        display_info("Created", time_format(database[:created_at]))
-        display_info("Mem Used", "%0.2f %" % database[:mem_percent_used]) unless [nil, ""].include? database[:mem_percent_used]
-        display_info("CPU Used", "%0.2f %" % (100 - database[:cpu_idle].to_f)) unless [nil, ""].include? database[:cpu_idle]
+        display_info "Plan",        database[:plan].capitalize         if database[:plan]
+        display_info "Status",      database[:state].capitalize        if database[:state]
+        display_info "Data Size",   size_format(database[:num_bytes])  if database[:num_bytes]
+        display_info "Tables",      database[:num_tables]              if database[:num_tables]
+        display_info "Forked From", database[:forked_from]             if database[:forked_from]
+        display_info "Following",   database[:tracking]                if database[:tracking]
+        display_info "PG Version",  database[:postgresql_version]      if database[:postgresql_version]
+        display_info "Created",     time_format(database[:created_at]) if database[:created_at]
       end
 
       def generate_ingress_uri(action)
