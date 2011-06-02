@@ -5,6 +5,17 @@ module PGResolver
     @config_vars ||= heroku.config_vars(app)
   end
 
+  def name_from_url(db_url)
+    name = reverse_resolve(db_url)
+    Resolver.new(name, config_vars).pretty_name
+  end
+
+  def reverse_resolve(db_url)
+   config_vars.detect do |name, url|
+      url == db_url && name != "DATABASE_URL"
+    end.first
+  end
+
   def resolve_db(options={})
     db_id = db_flag
     unless db_id
