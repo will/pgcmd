@@ -72,6 +72,12 @@ module Heroku
       #
       def unfollow
         follower_db = resolve_db(:required => 'pg:unfollow')
+
+        if follower_db[:name].include? "SHARED_DATABASE"
+          display " !    SHARED_DATABASE is not following another database"
+          return
+        end
+
         follower_name = follower_db[:pretty_name]
         follower_db_info = heroku_postgresql_client(follower_db[:url]).get_database
         origin_db_url = follower_db_info[:following]
@@ -80,18 +86,16 @@ module Heroku
           display " !    #{follower_name} is not following another database"
           return
         end
+
         origin_name = name_from_url(origin_db_url)
 
         display " !    #{follower_name} will become writable and no longer"
-        display " !    follow #{origin_name}. This cannot be undone.", false
+        display " !    follow #{origin_name}. This cannot be undone."
         return unless confirm_command
 
-        return if follower_db[:name].include? "SHARED_DATABASE"
         working_display "Unfollowing" do
           heroku_postgresql_client(follower_db[:url]).unfollow
         end
-
-        display_info "#{follower_db[:name]} stopped following", follower_db[:url]
       end
 
       # pg:reset <DATABASE>
